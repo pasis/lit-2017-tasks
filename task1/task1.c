@@ -15,7 +15,7 @@
 
 #define N 255 /* XXX */
 
-static double calc(const char *s, int *offset, bool *error);
+static double calc(const char *s, double x, int *offset, bool *error);
 
 static bool is_op(char c)
 {
@@ -44,7 +44,7 @@ static bool is_same(char c1, char c2)
 }
 
 /* Removes spaces and converts letters to lower case. */
-static void normalize(char *s)
+void normalize(char *s)
 {
 	int i;
 	int j;
@@ -81,7 +81,7 @@ static bool brackets_seq_is_valid(const char *s)
 }
 
 /* Checks if expression is valid. */
-static bool expr_is_valid(const char *s)
+bool expr_is_valid(const char *s)
 {
 	return brackets_seq_is_valid(s);
 }
@@ -97,7 +97,7 @@ static bool expr_is_valid(const char *s)
  *
  *  Length of the element is stored in `offset'
  */
-static double element_eval(const char *s, int *offset, bool *error)
+static double element_eval(const char *s, double x, int *offset, bool *error)
 {
 	double  num;
 	char   *endptr;
@@ -107,13 +107,16 @@ static double element_eval(const char *s, int *offset, bool *error)
 
 	assert(offset != NULL);
 
-	if (is_opening(s, 0)) {
-		num = calc(s + 1, &o, error);
+	if (s[0] == 'x') {
+		num = x;
+		o = 1;
+	} else if (is_opening(s, 0)) {
+		num = calc(s + 1, x, &o, error);
 		if (s[0] == '|')
 			num = fabs(num);
 		if (s[0] == '[')
 			num = trunc(num);
-		++o;
+		++o; /* Count the opening bracket. */
 	} else {
 		num = strtod(s, &endptr);
 		is_num = num != 0 || endptr != s;
@@ -121,7 +124,7 @@ static double element_eval(const char *s, int *offset, bool *error)
 		if (!is_num) {
 			/* We support only `sqrt' as an example. */
 			if (strncmp("sqrt", s, 4) == 0) {
-				num = element_eval(s + 4, &o, error);
+				num = element_eval(s + 4, x, &o, error);
 				if (!*error && num < 0)
 					*error = true;
 				else
@@ -137,7 +140,7 @@ static double element_eval(const char *s, int *offset, bool *error)
 		 * In this way we reduce complexity of calc().
 		 * Evaluate expression `x^y' as a single element.
 		 */
-		num = pow(num, element_eval(&s[o + 1], &o_pow, error));
+		num = pow(num, element_eval(&s[o + 1], x, &o_pow, error));
 		o += o_pow + 1;
 	}
 
@@ -149,7 +152,7 @@ static double element_eval(const char *s, int *offset, bool *error)
  * Recursive function of evaluation. Function stops on `)' or "end of line".
  * Length of evaluated part (including `)') is stored in `offset'.
  */
-static double calc(const char *s, int *offset, bool *error)
+static double calc(const char *s, double x, int *offset, bool *error)
 {
 	double  left  = 0;
 	double  right = 0;
@@ -189,7 +192,7 @@ static double calc(const char *s, int *offset, bool *error)
 	i = 0;
 	while (s[i] != '\0' && !is_closing(s, i)) {
 		/* Take a number */
-		num = element_eval(&s[i], &o, error);
+		num = element_eval(&s[i], x, &o, error);
 		i += o;
 		if (*error)
 			break;
@@ -233,10 +236,10 @@ static double calc(const char *s, int *offset, bool *error)
 	return left;
 }
 
-double eval(const char *expr, bool *error)
+double eval(const char *expr, double x, bool *error)
 {
 	*error = false;
-	return calc(expr, NULL, error);
+	return calc(expr, x, NULL, error);
 }
 
 int main()
@@ -250,7 +253,7 @@ int main()
 	assert(s == expr);
 	normalize(expr);
 	assert(expr_is_valid(expr));
-	res = eval(expr, &error);
+	res = eval(expr, 0, &error);
 	if (error)
 		printf("NaN\n");
 	else
