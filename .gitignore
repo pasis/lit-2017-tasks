@@ -2,6 +2,7 @@
 *.dsk
 *.ini
 *.o
+core
 
 task1/task1
 task1/task1c
