@@ -7,24 +7,24 @@
 
 Program Calc;
 
-function calc(var expr: String) : Extended; Forward;
-
 Var expr : String;
-Var error : Boolean;
-Var res : Extended;
+    error : Boolean;
+    res : Real;
 
-function elem(var expr : String) : Extended;
+function calc(var expr: String; var error : Boolean) : Real; Forward;
+
+function elem(var expr : String; var error : Boolean) : Real;
 var code : Integer;
-var x : Extended;
-var tmp : String;
+    num : Real;
+    tmp : String;
 begin
 	if expr[1] = '(' then begin
 		Delete(expr, 1, 1);
-		x := calc(expr);
+		num := calc(expr, error);
 		if (expr <> '') and (expr[1] = ')') then
 			Delete(expr, 1, 1);
 	end else begin
-		Val(expr, x, code);
+		Val(expr, num, code);
 		if code = 1 then begin
 			WriteLn('Expected number, but got: ', expr[code]);
 			Halt(1);
@@ -34,38 +34,38 @@ begin
 		else begin
 			tmp := Copy(expr, 1, code - 1);
 			Delete(expr, 1, code - 1);
-			Val(tmp, x, code);
+			Val(tmp, num, code);
 			if code <> 0 then begin
 				WriteLn('Error occured');
 				Halt(1);
 			end;
 		end;
 	end;
-	elem := x;
+	elem := num;
 end;
 
-function calc(var expr : String) : Extended;
-var num, left, right : Extended;
-var op, rop, nop : Char;
+function calc(var expr : String; var error : Boolean) : Real;
+var num, left, right : Real;
+    op, rop, nop : Char;
 begin
+	error := false;
 	op := '+';
 	rop := 'N';
 	left := 0;
 	right := 0;
 	while (expr <> '') and (expr[1] <> ')') do begin
-		num := elem(expr);
+		num := elem(expr, error);
 		if error then break;
 
 		if rop = '*' then
-			right := right * num;
-		if rop = '/' then begin
+			right := right * num
+		else if rop = '/' then begin
 			if num = 0 then begin
 				error := true;
 				break;
 			end;
 			right := right / num;
-		end;
-		if (rop <> '*') and (rop <> '/') then
+		end else
 			right := num;
 		rop := 'N';
 
@@ -77,7 +77,7 @@ begin
 				left := left - right;
 		end;
 
-		if expr <> '' then begin
+		if (expr <> '') and (expr[1] <> ')') then begin
 			nop := expr[1];
 			Delete(expr, 1, 1);
 		end else
@@ -92,9 +92,8 @@ begin
 end;
 
 Begin
-	error := false;
 	ReadLn(expr);
-	res := calc(expr);
+	res := calc(expr, error);
 	if error then
 		WriteLn('NaN')
 	else
