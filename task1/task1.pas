@@ -10,6 +10,7 @@ Program Calc;
 Var expr : String;
     error : Boolean;
     res : Real;
+    x : Real;
 
 function calc(var expr: String; var error : Boolean) : Real; Forward;
 
@@ -18,7 +19,10 @@ var code : Integer;
     num : Real;
     tmp : String;
 begin
-	if expr[1] = '(' then begin
+	if expr[1] = 'x' then begin
+		num := x;
+		Delete(expr, 1, 1);
+	end else if expr[1] = '(' then begin
 		Delete(expr, 1, 1);
 		num := calc(expr, error);
 		if (expr <> '') and (expr[1] = ')') then
@@ -92,6 +96,7 @@ begin
 end;
 
 Begin
+	x := 1;
 	ReadLn(expr);
 	res := calc(expr, error);
 	if error then
