@@ -12,7 +12,7 @@ Var expr : String;
     res : Real;
     x : Real;
 
-function calc(var expr: String; var error : Boolean) : Real; Forward;
+function eval(var expr: String; var error : Boolean) : Real; Forward;
 
 function elem(var expr : String; var error : Boolean) : Real;
 var code : Integer;
@@ -24,7 +24,7 @@ begin
 		Delete(expr, 1, 1);
 	end else if expr[1] = '(' then begin
 		Delete(expr, 1, 1);
-		num := calc(expr, error);
+		num := eval(expr, error);
 		if (expr <> '') and (expr[1] = ')') then
 			Delete(expr, 1, 1);
 	end else begin
@@ -48,7 +48,7 @@ begin
 	elem := num;
 end;
 
-function calc(var expr : String; var error : Boolean) : Real;
+function eval(var expr : String; var error : Boolean) : Real;
 var num, left, right : Real;
     op, rop, nop : Char;
 begin
@@ -92,13 +92,14 @@ begin
 		if (nop = '*') or (nop = '/') then
 			rop := nop;
 	end;
-	calc := left;
+	eval := left;
 end;
 
 Begin
-	x := 1;
+	x := 0; { We don't use `x' in task1. }
+
 	ReadLn(expr);
-	res := calc(expr, error);
+	res := eval(expr, error);
 	if error then
 		WriteLn('NaN')
 	else
